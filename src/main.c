@@ -123,6 +123,9 @@ int main(int argc, char **argv)
         printf("Not enough arguments\n");
     }
 
+    printf("File: %s\n", filename);
+    printf("Buad: %s\n", get_baud(baud));
+
     serial_init();
     fd = serial_open(filename);
     serial_set_baud(fd, get_baud(atoi(baud)));
