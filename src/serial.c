@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #define SUCCESS 1
 
@@ -65,11 +66,11 @@ int serial_set_baud(int fd, int baud)
     return SUCCESS;
 }
 
-ssize_t serial_read(int fd, char *buf, int buf_len)
+ssize_t serial_read(int fd, uint8_t *buf, int buf_len)
 {
     return read(fd, buf, buf_len);
 }
-int serial_write(int fd, char *buf, int buf_len)
+ssize_t serial_write(int fd, uint8_t *buf, int buf_len)
 {
     return write(fd, buf, buf_len);
 }

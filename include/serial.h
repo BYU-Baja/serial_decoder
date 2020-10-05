@@ -6,6 +6,7 @@
 #include <errno.h>   // Error integer and strerror() function
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h>  // write(), read(), close()
+#include <stdint.h>
 
 #define SERIAL_0 B0
 #define SERIAL_50 B50
@@ -46,8 +47,8 @@
 void serial_init();
 int serial_open(char *filename);
 int serial_set_baud(int fd, int baud);
-ssize_t serial_read(int fd, char *buf, int buf_len);
-int serial_write(int fd, char *buf, int buf_len);
+ssize_t serial_read(int fd, uint8_t *buf, int buf_len);
+ssize_t serial_write(int fd, uint8_t *buf, int buf_len);
 void serial_close(int fd);
 
 #endif

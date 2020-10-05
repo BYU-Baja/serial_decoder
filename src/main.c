@@ -1,4 +1,6 @@
 #include "serial.h"
+#include "protocol.h"
+#include "mqtt_client.h"
 
 #include <stdio.h>
 #include <getopt.h>
@@ -7,9 +9,12 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <limits.h>
 
 int fd;
 bool verbose = false;
+bool mqtt_enable = false;
 char *baud = "9600";
 char *filename;
 
@@ -84,7 +89,7 @@ int get_baud(int value)
     }
 }
 
-int main(int argc, char **argv)
+static void parse_args(int argc, char **argv)
 {
     int opt;
 
@@ -93,6 +98,7 @@ int main(int argc, char **argv)
         {"help", no_argument, 0, 0},
         {"verbose", no_argument, 0, 'v'},
         {"baud", required_argument, 0, 'b'},
+        {"mqtt_enable", no_argument, 0, 'm'},
         {NULL, 0, NULL, 0}};
 
     opterr = 0;
@@ -108,8 +114,10 @@ int main(int argc, char **argv)
         case 'b':
             baud = optarg;
             break;
+        case 'm':
+            mqtt_enable = true;
+            break;
         default:
-            exit(EXIT_FAILURE);
             break;
         }
     }
@@ -124,11 +132,43 @@ int main(int argc, char **argv)
     }
 
     printf("File: %s\n", filename);
-    printf("Buad: %s\n", get_baud(baud));
+    printf("Buad: %d\n", get_baud(atoi(baud)));
+}
+
+void handle_frame(rf_frame frame)
+{
+    char number[16];
+    sprintf(number, "baja/sensor/%03d", frame.id);
+    mqtt_client_publish(number, frame.data, frame.data_length);
+
+    printf("id: %x, flag: %x, len: %x, data: ", frame.id, frame.flag, frame.data_length);
+    for (uint8_t i = 0; i < frame.data_length; i++)
+    {
+        printf("%x", frame.data[i]);
+    }
+    printf("\n");
+}
+
+int main(int argc, char **argv)
+{
+    // Parse arguments;
+    parse_args(argc, argv);
 
     serial_init();
+    protocol_init();
+    protocol_handle_frame(handle_frame);
+    mqtt_client_init("127.0.0.1", "1883");
+
+    // Open serial port
     fd = serial_open(filename);
     serial_set_baud(fd, get_baud(atoi(baud)));
+
+    // Read the serial communication.
+    uint8_t buf[2];
+    while (1)
+        if (serial_read(fd, buf, 1) > 0)
+            protocol_process_byte(buf[0]);
+
     serial_close(fd);
     return 0;
 }
