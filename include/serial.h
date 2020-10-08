@@ -45,10 +45,15 @@
 #define SERIAL_MAX_BAUD SERIAL_4000000
 
 void serial_init();
+
 int serial_open(char *filename);
+
 int serial_set_baud(int fd, int baud);
+
 ssize_t serial_read(int fd, uint8_t *buf, int buf_len);
+
 ssize_t serial_write(int fd, uint8_t *buf, int buf_len);
+
 void serial_close(int fd);
 
 #endif
