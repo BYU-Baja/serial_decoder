@@ -1,9 +1,15 @@
-## Serial Decoder
+# Serial Decoder
 
-This project relies on the MQTT-C client https://github.com/LiamBindle/MQTT-C.git.
+This is a decoder that listens to the incoming transmissions from the radio module a the base station and then retransmits them on MQTT or on the serial port so that we can see the incoming data. Written in several different languages that run on various platforms to be as extensible as possible.
 
+## c_serial_decoder
 
-## Building
-To build you must first clone the MQTT-C code in this repo. To do so run this command inside the root folder of this repo
+This is the c version of the decoder.
 
-'''git clone https://github.com/LiamBindle/MQTT-C.git mqtt'''
+## python_decoder
+
+This is the python version
+
+## go_decoder
+
+This is the go version
