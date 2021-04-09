@@ -1,21 +1,26 @@
 import argparse
 import serial
+import time
 import struct
 import paho.mqtt.client as mqtt
 
 verbose = False
 use_mqtt = False
 host = "localhost"
-port = "8883"
+port = "1883"
 serialPort = ""
 use_dummy = False
 baud = 9600
 args = None
 ser = None
+file = None
 frame = {}
 
 state = "START"
 
+# Change this depending on the protocol you want to use. Sending data to one MQTT port will not send it to all the ports.
+# So if you are using the ReactUI web app make sure that you have websockets enables here, or it will not connect to the broker!
+# client = mqtt.Client()
 client = mqtt.Client(transport="websockets")
 __dummy__data__a4 = 0.0
 
@@ -43,6 +48,8 @@ client.on_message = on_message
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--file", "-f", metavar="Save to file",
+                        type=str, help="Serial port")
     parser.add_argument("--serialport", "-sp", metavar="SerialPort",
                         type=str, help="Serial port")
     parser.add_argument("--verbose", "-v", action="store_true",
@@ -54,10 +61,10 @@ def parse_args():
     parser.add_argument("--host", type=str,
                         required=False, help="MQTT host name, default localhost", default="localhost")
     parser.add_argument("--port", type=str,
-                        required=False, help="MQTT port name, default 1883", default=8883)
+                        required=False, help="MQTT port name, default 1883", default=1883)
     parser.add_argument("--baud", "-b", type=int,
-                        required=False, help="MQTT port name, default 1883", default=9600)
-    global args, use_dummy, use_mqtt, verbose, serialPort, host, port, baud
+                        required=False, help="MQTT port name, default 9600", default=9600)
+    global args, use_dummy, use_mqtt, verbose, serialPort, host, port, baud, file
     args = parser.parse_args()
     use_mqtt = args.mqtt
     verbose = args.verbose
@@ -66,6 +73,7 @@ def parse_args():
     port = args.port
     use_dummy = args.test
     baud = args.baud
+    file = args.file
 
 
 def connect_mqtt():
@@ -87,6 +95,13 @@ def __dummy__data():
         __dummy__data__a4 += 0.1
         ba = bytearray(struct.pack("f", __dummy__data__a4))
         client.publish("baja/sensors/0xa4", ba)
+        time.sleep(0.1)
+        client.publish("baja/sensors/0xa3", ba)
+        time.sleep(0.1)
+        client.publish("baja/sensors/0xa2", ba)
+        time.sleep(0.1)
+        client.publish("baja/sensors/0xa1", ba)
+        time.sleep(0.1)
 
 
 def connect_serial():
@@ -137,6 +152,13 @@ def __handle__frame():
         for i in frame["data"]:
             print(hex(i), end=" ")
         print()
+    # if f is not None:
+    #     f.write(hex(frame["id"]), end=" ")
+    #     f.write(hex(frame["flag"]), end=" ")
+    #     f.write(hex(frame["len"]), end=" ")
+    #     for i in frame["data"]:
+    #         f.write(hex(i), end=" ")
+    #     f.write()
 
     if use_mqtt:
         client.publish("baja/sensors/" +
@@ -145,6 +167,8 @@ def __handle__frame():
 
 if __name__ == "__main__":
     parse_args()
+    if file is not None:
+        f = open(file, "w+")
     if use_mqtt:
         connect_mqtt()
     if use_dummy:
